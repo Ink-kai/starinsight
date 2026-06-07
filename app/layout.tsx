@@ -5,18 +5,18 @@ import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
-  title: '紫微命盘 · 倪海夏正宗紫微斗数',
-  description: '基于倪海夏正宗紫微斗数体系，AI深度解读您的命盘格局、大限流年、感情事业财富健康全方位解析',
-  keywords: '紫微斗数, 倪海夏, 倪海厦, 紫微斗数全集, 紫微斗数全书, 骨髓赋, 命盘, 命理, 14主星, 12宫位',
-  metadataBase: new URL('https://wdyziweidoushu666.com'),
+  title: 'AI 紫微命盘报告',
+  description: '输入出生日期、出生时间、性别与出生地，生成紫微命盘，并用 AI 输出可阅读、可收藏的结构化命盘报告。',
+  keywords: 'AI紫微命盘报告, 紫微斗数, AI命盘, 命盘报告, 紫微排盘, 性格分析, 事业财运, 感情建议',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: '紫微命盘 · 倪海夏正宗紫微斗数',
-    description: '基于倪海夏正宗紫微斗数体系，AI深度解读您的命盘格局、大限流年、感情事业财富健康全方位解析',
-    url: 'https://wdyziweidoushu666.com',
-    siteName: '紫微研究',
+    title: 'AI 紫微命盘报告',
+    description: '用 AI 把复杂命盘转化为可读的人生洞察，支持免费摘要与完整报告分层展示。',
+    url: '/',
+    siteName: 'AI 紫微命盘报告',
     locale: 'zh_CN',
     type: 'website',
   },

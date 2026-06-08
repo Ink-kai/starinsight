@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { mkdir, readFile, rename, writeFile } from 'fs/promises';
 import path from 'path';
+import { SupabaseReportStore } from './supabase-store';
 import type { CreateReportInput, ReportStatus, ZiweiReport } from './types';
 
 const REPORTS_DIR = process.env.REPORT_STORE_DIR || path.join(process.cwd(), 'data', 'reports');
@@ -92,7 +93,25 @@ export class JsonFileReportStore implements ReportStore {
   }
 }
 
-const defaultReportStore: ReportStore = new JsonFileReportStore();
+export type ReportStoreKind = 'json' | 'supabase';
+
+function getReportStoreKind(): ReportStoreKind {
+  const store = process.env.REPORT_STORE || 'json';
+  if (store === 'json' || store === 'supabase') {
+    return store;
+  }
+  throw new Error(`Unsupported REPORT_STORE: ${store}. Use "json" or "supabase".`);
+}
+
+function createDefaultReportStore(): ReportStore {
+  const store = getReportStoreKind();
+  if (store === 'supabase') {
+    return new SupabaseReportStore();
+  }
+  return new JsonFileReportStore();
+}
+
+const defaultReportStore: ReportStore = createDefaultReportStore();
 
 export function createReport<TChartData>(input: CreateReportInput<TChartData>): Promise<ZiweiReport<TChartData>> {
   return defaultReportStore.create(input);

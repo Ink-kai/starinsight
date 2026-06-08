@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { buildCheckoutUrl, buildExportUrl, verifyReportAccess } from '@/lib/report/access';
 import { getReport } from '@/lib/report/store';
 import type { BirthInfo, ReportOutput, ReportStatus } from '@/lib/report/types';
 import type { ZiweiChart } from '@/lib/ziwei/types';
@@ -98,7 +99,7 @@ function FreeSummary({ report }: { report: PublicReportView }) {
   );
 }
 
-function PaidSections({ fullReport, reportId: fullReportId }: { fullReport: ReportOutput; reportId: string }) {
+function PaidSections({ fullReport, reportId, accessToken }: { fullReport: ReportOutput; reportId: string; accessToken: string }) {
   return (
     <section className="mt-6 grid gap-4">
       <div className="rounded-2xl border border-emerald-200/20 bg-emerald-300/[0.06] p-4 sm:p-5">
@@ -107,7 +108,7 @@ function PaidSections({ fullReport, reportId: fullReportId }: { fullReport: Repo
             <h2 className="text-lg font-semibold text-white">完整报告已解锁</h2>
             <p className="mt-2 text-sm leading-7 text-slate-300">以下为完整 AI 命盘报告章节。</p>
           </div>
-          <a href={`/api/reports/${fullReportId}/export`} className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-950">
+          <a href={buildExportUrl(reportId, accessToken)} className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-950">
             下载 Markdown
           </a>
         </div>
@@ -125,7 +126,7 @@ function PaidSections({ fullReport, reportId: fullReportId }: { fullReport: Repo
   );
 }
 
-function LockedPaidPrompt({ reportId }: { reportId: string }) {
+function LockedPaidPrompt({ reportId, accessToken }: { reportId: string; accessToken: string }) {
   return (
     <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4 sm:p-5">
       <h2 className="text-lg font-semibold text-white">完整报告未解锁</h2>
@@ -133,7 +134,7 @@ function LockedPaidPrompt({ reportId }: { reportId: string }) {
         当前为免费报告，仅展示命盘基础信息、AI 摘要和三条核心洞察。完整章节将在 paid 状态后由服务端展示。
       </p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Link href={`/checkout/${reportId}`} className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-5 py-2 text-sm font-semibold text-slate-950">
+        <Link href={buildCheckoutUrl(reportId, accessToken)} className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 px-5 py-2 text-sm font-semibold text-slate-950">
           解锁完整报告
         </Link>
         <p className="break-all text-xs text-slate-500">Report ID：{reportId}</p>
@@ -156,10 +157,38 @@ function FailedState() {
   );
 }
 
-export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
+
+function AccessDenied({ message, legacyMissingToken }: { message: string; legacyMissingToken?: boolean }) {
+  return (
+    <main className="min-h-screen bg-[#050712] px-5 py-8 text-slate-100 sm:px-8 sm:py-10">
+      <section className="mx-auto max-w-2xl rounded-[2rem] border border-red-300/20 bg-red-400/[0.06] p-6 text-center sm:p-8">
+        <p className="text-xs uppercase tracking-[0.35em] text-red-100/80">Access denied</p>
+        <h1 className="mt-4 text-2xl font-semibold text-white">无法访问这份报告</h1>
+        <p className="mt-4 text-sm leading-7 text-slate-300">{message}</p>
+        {legacyMissingToken ? (
+          <p className="mt-3 text-sm leading-7 text-slate-400">旧报告缺少私密访问 token。开发环境可重新生成一份报告来获得新的私密访问链接。</p>
+        ) : null}
+        <Link href="/chart/new" className="mt-6 inline-flex rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-950">
+          重新生成报告
+        </Link>
+      </section>
+    </main>
+  );
+}
+
+export default async function ReportPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ token?: string }> }) {
   const { id } = await params;
-  const report = buildPublicReportView(await getReport(id));
-  if (!report) notFound();
+  const { token } = await searchParams;
+  const storedReport = await getReport(id);
+  if (!storedReport) notFound();
+
+  const access = verifyReportAccess(storedReport, token);
+  if (!access.ok) {
+    return <AccessDenied message={access.message} legacyMissingToken={access.legacyMissingToken} />;
+  }
+
+  const report = buildPublicReportView(storedReport);
+  if (!report || !storedReport.accessToken) notFound();
 
   return (
     <main className="min-h-screen bg-[#050712] px-5 py-8 text-slate-100 sm:px-8 sm:py-10">
@@ -197,8 +226,8 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           </div>
 
           {report.status === 'failed' ? <FailedState /> : <FreeSummary report={report} />}
-          {report.status === 'paid' && report.fullReport ? <PaidSections fullReport={report.fullReport} reportId={report.id} /> : null}
-          {report.status === 'free' ? <LockedPaidPrompt reportId={report.id} /> : null}
+          {report.status === 'paid' && report.fullReport ? <PaidSections fullReport={report.fullReport} reportId={report.id} accessToken={storedReport.accessToken} /> : null}
+          {report.status === 'free' ? <LockedPaidPrompt reportId={report.id} accessToken={storedReport.accessToken} /> : null}
         </section>
       </div>
     </main>

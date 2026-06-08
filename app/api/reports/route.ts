@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { generateChart } from '@/lib/ziwei/algorithm';
 import { createAIReportProvider, generateAIReport } from '@/lib/ai/provider';
+import { buildReportUrl } from '@/lib/report/access';
 import { createReport } from '@/lib/report/store';
 import { parseReportBirthInfo, reportBirthInfoToZiweiBirthInfo } from '@/lib/report/birth';
 import type { BirthInfo as ReportBirthInfo, ReportOutput } from '@/lib/report/types';
@@ -100,7 +101,17 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ reportId: report.id, id: report.id, status: report.status });
+    if (!report.accessToken) {
+      throw new Error('报告访问 token 生成失败');
+    }
+
+    return NextResponse.json({
+      reportId: report.id,
+      id: report.id,
+      accessToken: report.accessToken,
+      reportUrl: buildReportUrl(report.id, report.accessToken),
+      status: report.status,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : '创建报告失败';
     return NextResponse.json({ error: message }, { status: 400 });

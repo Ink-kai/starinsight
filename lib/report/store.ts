@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { mkdir, readFile, rename, writeFile } from 'fs/promises';
 import path from 'path';
+import { generateReportAccessToken } from './access';
 import { SupabaseReportStore } from './supabase-store';
 import type { CreateReportInput, ReportStatus, ZiweiReport } from './types';
 
@@ -43,6 +44,7 @@ export class JsonFileReportStore implements ReportStore {
     const now = new Date().toISOString();
     const report: ZiweiReport<TChartData> = {
       id: randomUUID(),
+      accessToken: input.accessToken ?? generateReportAccessToken(),
       birthInfo: input.birthInfo,
       chartData: input.chartData,
       aiSummary: input.aiSummary ?? '',

@@ -55,7 +55,7 @@ export default function NewChartForm() {
       if (!response.ok) {
         throw new Error(data.error || '创建报告失败');
       }
-      router.push(`/report/${data.reportId}`);
+      router.push(typeof data.reportUrl === 'string' ? data.reportUrl : `/report/${data.reportId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : '创建报告失败');
     } finally {

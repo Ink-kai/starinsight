@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { generateReportAccessToken } from './access';
 import type { CreateReportInput, ReportStatus, ZiweiReport } from './types';
 import type { ReportStore } from './store';
 
@@ -39,6 +40,7 @@ function assertSafeReportId(id: string): void {
 function toReport<TChartData = unknown>(row: SupabaseReportRow): ZiweiReport<TChartData> {
   return {
     id: row.id,
+    accessToken: row.access_token,
     birthInfo: row.birth_info as ZiweiReport<TChartData>['birthInfo'],
     chartData: row.chart_data as TChartData,
     aiSummary: row.ai_summary ?? '',
@@ -54,7 +56,7 @@ function toReport<TChartData = unknown>(row: SupabaseReportRow): ZiweiReport<TCh
 function toRow<TChartData>(input: CreateReportInput<TChartData>, now: string): SupabaseReportRow {
   return {
     id: randomUUID(),
-    access_token: randomUUID(),
+    access_token: input.accessToken ?? generateReportAccessToken(),
     birth_info: input.birthInfo,
     chart_data: input.chartData,
     ai_summary: input.aiSummary ?? '',

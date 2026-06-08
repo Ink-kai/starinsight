@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
+import { getReportTokenFromUrl, verifyReportAccess } from '@/lib/report/access';
 import { getReport } from '@/lib/report/store';
 import { generateReportMarkdown, getMarkdownFileName } from '@/lib/report/markdown';
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const report = await getReport(id);
 
   if (!report) {
     return NextResponse.json({ error: 'Report not found' }, { status: 404 });
+  }
+
+  const access = verifyReportAccess(report, getReportTokenFromUrl(request.url));
+  if (!access.ok) {
+    return NextResponse.json({ error: access.message }, { status: access.status });
   }
 
   if (report.status !== 'paid' || !report.aiFullReport) {

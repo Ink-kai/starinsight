@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { generateChart } from '@/lib/ziwei/algorithm';
+import { createAIReportProvider, generateAIReport } from '@/lib/ai/provider';
 import { createReport } from '@/lib/report/store';
 import { parseReportBirthInfo, reportBirthInfoToZiweiBirthInfo } from '@/lib/report/birth';
-import type { BirthInfo as ReportBirthInfo } from '@/lib/report/types';
+import type { BirthInfo as ReportBirthInfo, ReportOutput } from '@/lib/report/types';
 import type { ZiweiChart } from '@/lib/ziwei/types';
-import { BRANCHES } from '@/lib/ziwei/constants';
 
 function validateBirthInfo(input: unknown): ReportBirthInfo {
   if (!input || typeof input !== 'object') {
@@ -43,20 +43,34 @@ function validateBirthInfo(input: unknown): ReportBirthInfo {
   return normalized;
 }
 
-function buildInitialSummary(chart: ZiweiChart): { summary: string; highlights: string[] } {
-  const ming = chart.palaces.find(p => p.branch === chart.mingGongBranch);
-  const shen = chart.palaces.find(p => p.branch === chart.shenGongBranch);
-  const mingStars = ming?.stars.filter(star => star.type === 'major').map(star => star.name) ?? [];
-  const currentDaXian = chart.daXians[chart.currentDaXianIndex];
+function getAIProviderName(): string {
+  return process.env.AI_PROVIDER || 'deepseek';
+}
 
-  return {
-    summary: `命宫在${BRANCHES[chart.mingGongBranch]}，身宫在${BRANCHES[chart.shenGongBranch]}，五行局为${chart.wuxingJuName}。完整 AI 摘要将在后续报告生成步骤中补充。`,
-    highlights: [
-      mingStars.length > 0 ? `命宫主星：${mingStars.join('、')}。` : '命宫为空宫，后续报告将结合对宫借星综合解读。',
-      shen ? `身宫落在${shen.name}，可作为行动模式与后天重心的参考。` : '身宫信息已写入命盘结构。',
-      currentDaXian ? `当前大限：${currentDaXian.startAge}–${currentDaXian.endAge}岁，落${currentDaXian.palaceName}。` : '当前大限信息将结合年龄进一步展示。',
-    ],
-  };
+function getAIModelName(): string {
+  return process.env.AI_MODEL || 'deepseek-chat';
+}
+
+async function generateReportWithFallback(
+  birthInfo: ReportBirthInfo,
+  chart: ZiweiChart,
+): Promise<{ output: ReportOutput; failureReason?: string }> {
+  try {
+    const provider = createAIReportProvider();
+    const output = await generateAIReport(birthInfo, chart, provider);
+    return { output, failureReason: provider.lastFailureReason };
+  } catch (error) {
+    const failureReason = error instanceof Error ? error.message : 'AI 报告生成失败';
+    console.error('[reports] AI report generation failed, using fallback output', error);
+
+    // generateAIReport 正常情况下会由 provider 内部返回 fallback；这里保留外层兜底，
+    // 避免 provider 配置异常或未知错误导致报告创建流程白屏。
+    const { buildFallbackReport, buildReportInput } = await import('@/lib/ai/prompts/report');
+    return {
+      output: buildFallbackReport(buildReportInput(birthInfo, chart)),
+      failureReason,
+    };
+  }
 }
 
 export async function POST(request: Request) {
@@ -65,17 +79,22 @@ export async function POST(request: Request) {
     const birthInfo = validateBirthInfo(body);
     const ziweiBirthInfo = reportBirthInfoToZiweiBirthInfo(birthInfo);
     const chart = generateChart(ziweiBirthInfo);
-    const initialReport = buildInitialSummary(chart);
+    const aiReport = await generateReportWithFallback(birthInfo, chart);
     const parsed = parseReportBirthInfo(birthInfo);
 
     const report = await createReport<ZiweiChart>({
       birthInfo,
       chartData: chart,
-      aiSummary: initialReport.summary,
-      aiHighlights: initialReport.highlights,
+      aiSummary: aiReport.output.summary,
+      aiHighlights: aiReport.output.highlights.slice(0, 3),
+      aiFullReport: aiReport.output,
       status: 'free',
       metadata: {
         source: 'chart-new-form',
+        aiProvider: getAIProviderName(),
+        aiModel: getAIModelName(),
+        aiStatus: aiReport.failureReason ? 'fallback' : 'generated',
+        aiFailureReason: aiReport.failureReason,
         trueSolarLongitude: birthInfo.useTrueSolarTime ? parsed.longitude : undefined,
         matchedBirthPlace: parsed.matchedBirthPlace,
       },

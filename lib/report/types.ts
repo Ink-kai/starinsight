@@ -52,6 +52,7 @@ export interface ReportMetadata {
 
 export interface ZiweiReport<TChartData = ZiweiChart | unknown> {
   id: string;
+  accessToken?: string;
   birthInfo: BirthInfo;
   chartData: TChartData;
   aiSummary: string;
@@ -64,6 +65,7 @@ export interface ZiweiReport<TChartData = ZiweiChart | unknown> {
 }
 
 export interface CreateReportInput<TChartData = ZiweiChart | unknown> {
+  accessToken?: string;
   birthInfo: BirthInfo;
   chartData: TChartData;
   aiSummary?: string;

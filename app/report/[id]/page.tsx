@@ -98,12 +98,19 @@ function FreeSummary({ report }: { report: PublicReportView }) {
   );
 }
 
-function PaidSections({ fullReport }: { fullReport: ReportOutput }) {
+function PaidSections({ fullReport, reportId: fullReportId }: { fullReport: ReportOutput; reportId: string }) {
   return (
     <section className="mt-6 grid gap-4">
       <div className="rounded-2xl border border-emerald-200/20 bg-emerald-300/[0.06] p-4 sm:p-5">
-        <h2 className="text-lg font-semibold text-white">完整报告已解锁</h2>
-        <p className="mt-2 text-sm leading-7 text-slate-300">以下为完整 AI 命盘报告章节。</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-white">完整报告已解锁</h2>
+            <p className="mt-2 text-sm leading-7 text-slate-300">以下为完整 AI 命盘报告章节。</p>
+          </div>
+          <a href={`/api/reports/${fullReportId}/export`} className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-950">
+            下载 Markdown
+          </a>
+        </div>
       </div>
       {SECTION_LABELS.map(({ key, title }) => (
         <article key={key} className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 sm:p-5">
@@ -190,7 +197,7 @@ export default async function ReportPage({ params }: { params: Promise<{ id: str
           </div>
 
           {report.status === 'failed' ? <FailedState /> : <FreeSummary report={report} />}
-          {report.status === 'paid' && report.fullReport ? <PaidSections fullReport={report.fullReport} /> : null}
+          {report.status === 'paid' && report.fullReport ? <PaidSections fullReport={report.fullReport} reportId={report.id} /> : null}
           {report.status === 'free' ? <LockedPaidPrompt reportId={report.id} /> : null}
         </section>
       </div>

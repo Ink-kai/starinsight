@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { adminMarkPaidRateLimitRule, checkRateLimit, rateLimitResponse } from '@/lib/rate-limit';
 import { buildFallbackReport } from '@/lib/ai/prompts/report';
 import { getReport, updateReport } from '@/lib/report/store';
 import type { ReportOutput } from '@/lib/report/types';
@@ -20,6 +21,11 @@ function buildUnlockReport(existingSummary: string, existingHighlights: string[]
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const rateLimit = checkRateLimit(request, adminMarkPaidRateLimitRule());
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit);
+  }
+
   const adminToken = process.env.ADMIN_TOKEN;
   if (!adminToken) {
     return NextResponse.json({ error: 'ADMIN_TOKEN is not configured' }, { status: 503 });

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { generateChart } from '@/lib/ziwei/algorithm';
 import { createAIReportProvider, generateAIReport } from '@/lib/ai/provider';
 import { buildReportUrl } from '@/lib/report/access';
+import { checkRateLimit, rateLimitResponse, reportsCreateRateLimitRule } from '@/lib/rate-limit';
 import { createReport } from '@/lib/report/store';
 import { parseReportBirthInfo, reportBirthInfoToZiweiBirthInfo } from '@/lib/report/birth';
 import type { BirthInfo as ReportBirthInfo, ReportOutput } from '@/lib/report/types';
@@ -75,6 +76,11 @@ async function generateReportWithFallback(
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit(request, reportsCreateRateLimitRule());
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit);
+  }
+
   try {
     const body = await request.json();
     const birthInfo = validateBirthInfo(body);

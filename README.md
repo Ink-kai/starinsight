@@ -77,6 +77,10 @@ npm run start
 | `REPORT_STORE_DIR` | 否 | 本地 JSON 报告存储目录；仅建议本地开发使用。 |
 | `SUPABASE_URL` | `REPORT_STORE=supabase` 时必填 | Supabase Project URL，仅服务端使用。 |
 | `SUPABASE_SERVICE_ROLE_KEY` | `REPORT_STORE=supabase` 时必填 | Supabase service role key，仅服务端使用，严禁添加 `NEXT_PUBLIC_` 前缀。 |
+| `RATE_LIMIT_ENABLED` | 否 | 是否启用基础限流，默认 `true`。 |
+| `RATE_LIMIT_REPORTS_PER_HOUR` | 否 | `POST /api/reports` 同 IP 每小时最大次数，默认 `5`。 |
+| `RATE_LIMIT_EXPORT_PER_HOUR` | 否 | `GET /api/reports/{id}/export` 同 IP 每小时最大次数，默认 `20`。 |
+| `RATE_LIMIT_ADMIN_PER_10MIN` | 否 | `POST /api/admin/reports/{id}/mark-paid` 同 IP 每 10 分钟最大次数，默认 `10`。 |
 
 ---
 
@@ -213,6 +217,38 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 ---
 
+
+## 基础限流 / 滥用防护
+
+MVP 已对高风险接口增加内存限流：
+
+| 接口 | 默认规则 | 风险目的 |
+|---|---|---|
+| `POST /api/reports` | 同 IP 每小时 5 次 | 降低 AI 成本被刷。 |
+| `POST /api/admin/reports/{id}/mark-paid` | 同 IP 每 10 分钟 10 次 | 降低 admin token 被撞库风险。 |
+| `GET /api/reports/{id}/export` | 同 IP 每小时 20 次 | 降低导出接口被滥用。 |
+
+限流 IP 读取顺序：
+
+1. `x-forwarded-for` 的第一个 IP。
+2. `x-real-ip`。
+3. 缺失时使用 `unknown`。
+
+超限会返回 `429` JSON，并带上 `Retry-After`、`X-RateLimit-Limit`、`X-RateLimit-Remaining`、`X-RateLimit-Reset` 响应头。
+
+可选环境变量：
+
+```env
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_REPORTS_PER_HOUR=5
+RATE_LIMIT_EXPORT_PER_HOUR=20
+RATE_LIMIT_ADMIN_PER_10MIN=10
+```
+
+> 已知限制：当前实现是进程内存限流。在 Vercel / Cloudflare Pages 等 Serverless 多实例环境下，它不是全局强一致；冷启动、实例扩缩容或多 region 都可能导致计数不共享。生产环境建议把同一接口替换为 Upstash Redis、Vercel KV 或其他集中式限流服务。
+
+---
+
 ## 手动支付占位流程
 
 当前 MVP 不接真实支付。流程为：
@@ -240,6 +276,7 @@ curl -X POST https://your-domain.com/api/admin/reports/{reportId}/mark-paid \
 - `OPENAI_API_KEY` 为预留变量，当前代码默认仅支持 `AI_PROVIDER=deepseek`。
 - Markdown 导出仅对 `paid` 报告开放，`free` / `failed` 报告会返回 403。
 - Cloudflare Pages 可能需要额外 Next.js 适配；若 API Routes 或 Node.js runtime 不兼容，建议优先 Vercel。
+- 当前限流为进程内存实现，在 Serverless 多实例下不是强一致；生产建议替换为 Upstash Redis / Vercel KV。
 - 当前没有复杂用户系统、报告历史、自动支付、后台 CMS、RAG 知识库和 PDF 导出。
 
 ---
@@ -269,6 +306,7 @@ curl -X POST https://your-domain.com/api/admin/reports/{reportId}/mark-paid \
 
 P1：
 
+- 将内存限流替换为 Upstash Redis / Vercel KV 等集中式限流。
 - 为 Supabase 报告表补充 Row Level Security 策略、备份策略和数据删除流程。
 - 增加 Neon/Upstash/D1 等其他 `ReportStore` 实现。
 - 增加管理员后台或受保护工具页，替代手写 curl 标记 paid。

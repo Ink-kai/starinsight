@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getReportTokenFromUrl, verifyReportAccess } from '@/lib/report/access';
+import { checkRateLimit, exportRateLimitRule, rateLimitResponse } from '@/lib/rate-limit';
 import { getReport } from '@/lib/report/store';
 import { generateReportMarkdown, getMarkdownFileName } from '@/lib/report/markdown';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const rateLimit = checkRateLimit(request, exportRateLimitRule());
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit);
+  }
+
   const { id } = await params;
   const report = await getReport(id);
 

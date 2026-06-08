@@ -249,6 +249,30 @@ RATE_LIMIT_ADMIN_PER_10MIN=10
 
 ---
 
+
+## 测试
+
+上线前建议至少运行：
+
+```bash
+npm run test:smoke
+npm run build
+```
+
+`npm run test:smoke` 会启动临时 Next.js dev server，并使用 `REPORT_STORE=json` 与临时目录覆盖核心链路：
+
+- 创建报告正常输入返回 `reportId` 和 `accessToken`。
+- 缺少性别 / 日期 / 时间返回 400。
+- 无 `DEEPSEEK_API_KEY` 时 AI fallback 不会导致创建报告失败。
+- AI Provider 返回非法 JSON 时会 fallback，并记录失败原因。
+- free 报告不能导出，paid 报告可以导出 Markdown。
+- 错误 `ADMIN_TOKEN` 不能 mark-paid，正确 `ADMIN_TOKEN` 可以 mark-paid。
+- 错误 report token 不能查看报告内容或导出报告。
+
+Smoke tests 不会调用真实 DeepSeek，也不依赖生产 Supabase；测试结束会清理临时 JSON 报告目录。
+
+---
+
 ## 手动支付占位流程
 
 当前 MVP 不接真实支付。流程为：
@@ -310,7 +334,7 @@ P1：
 - 为 Supabase 报告表补充 Row Level Security 策略、备份策略和数据删除流程。
 - 增加 Neon/Upstash/D1 等其他 `ReportStore` 实现。
 - 增加管理员后台或受保护工具页，替代手写 curl 标记 paid。
-- 补充基础自动化测试：报告创建、mark-paid、Markdown export。
+- 扩展自动化测试覆盖 Supabase、限流和更多异常输入。
 
 P2：
 

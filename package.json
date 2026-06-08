@@ -9,7 +9,9 @@
     "start": "next start",
     "build:cf": "npx @cloudflare/next-on-pages",
     "preview:cf": "npx wrangler pages dev",
-    "prepare": "husky"
+    "prepare": "husky",
+    "check:env": "node scripts/check-env.mjs",
+    "test:smoke": "node scripts/smoke-test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",

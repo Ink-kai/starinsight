@@ -1,201 +1,258 @@
-# 紫微斗数 · 开源排盘引擎
+# AI 紫微命盘报告 MVP
 
-> 🎉 **网站已完成 ICP 备案**（京 ICP 备 2026027116 号），主域名已正式上线、全部功能正常访问。
->
-> 直接访问主域名 **https://wdyziweidoushu666.com** 即可，排盘 / AI 解读 / 命盘历史等全部功能均已开放。
->
-> 💕 **发财的小手点一下，小红书关注：王多鱼AI**，第一时间看上线 + 解锁更多紫微干货～
+AI 紫微命盘报告是基于 `Renhuai123/ziwei-doushu` 改造的商业化 MVP：用户输入出生信息后，系统生成紫微命盘，并输出一份面向普通用户的结构化 AI 命盘报告。
 
-基于**倪海夏《天纪》**教学体系的紫微斗数排盘系统，包含完整排盘算法、四化系统、格局知识库、古籍原文数据，以及 **51.8 万条命盘样本数据**。
+MVP 当前聚焦：
 
-线上体验：[wdyziweidoushu666.com](https://wdyziweidoushu666.com)
+- 出生信息输入与紫微命盘生成。
+- 免费报告摘要与三条核心洞察。
+- paid 状态下展示完整报告章节。
+- 手动支付占位与管理员标记 paid。
+- paid 报告 Markdown 导出。
+- 保留原项目 License 与 Attribution。
 
----
-
-## 51.8 万命盘样本数据
-
-> **下载位置：本仓库右侧 [Releases](https://github.com/Renhuai123/ziwei-doushu/releases/tag/v3.0-samples) 页面**
-
-我们开源了一套完整的紫微斗数命盘样本数据集，覆盖 **51.8 万种排盘组合**（年 60 × 月 12 × 日 30 × 时 12 × 性别 2），每条样本包含完整的命盘结构和基于倪海夏体系的解读文本。
-
-### 数据规格
-
-| 项目 | 说明 |
-|------|------|
-| 样本数量 | **518,400 条** |
-| 总大小 | 5.5 GB（分 3 卷压缩） |
-| 体系 | 倪海夏《天纪》正统（纯飞星派已下线） |
-| 内容 | 命盘 JSON + 13 主题解读文本（命格总览、财运、事业、感情、健康等） |
-| 验证 | 男女命差异化 100%、健康含子午流注 100%、女命含妇科保养 100% |
-| 口径 | 与线上 [wdyziweidoushu666.com](https://wdyziweidoushu666.com) 完全一致 |
-
-### 下载方式
-
-前往 [Releases](https://github.com/Renhuai123/ziwei-doushu/releases/tag/v3.0-samples) 下载以下文件：
-
-```
-ziwei-samples-v3-part1.zip.001  (1.9 GB)
-ziwei-samples-v3-part2.zip.002  (1.9 GB)
-ziwei-samples-v3-part3.zip.003  (1.8 GB)
-SHA256SUMS.txt                  (校验文件)
-```
-
-下载后合并解压：
-
-```bash
-# macOS / Linux
-cat ziwei-samples-v3-part*.zip.* > combined.zip
-unzip combined.zip
-
-# Windows (PowerShell)
-Get-Content ziwei-samples-v3-part*.zip.* -Encoding Byte -ReadCount 0 | Set-Content combined.zip -Encoding Byte
-Expand-Archive combined.zip
-```
-
-### 用途
-
-- 微调小模型的训练语料（51.8 万 input-output 配对）
-- AI 对话的 RAG 检索源
-- 修改 `patterns.ts` 后做 A/B 基线对比
-- 紫微斗数研究与数据分析
-
-### 数据许可与引用
-
-📂 **完全开源 · 可自由商用** —— 你可以在任何项目里使用这套数据，包括但不限于：
-
-- 商业产品 / SaaS / 付费应用
-- AI 模型微调（开源或闭源模型均可）
-- 二次开发、再分发、衍生数据集
-- 学术研究、技术博客、教学课程
-
-无需付费、无需申请、无需事先告知。
-
-**唯一的要求是保留数据来源标注（attribution）**：
-
-> 本项目使用了 **紫微斗数开源样本数据集 v3.0**（518,400 条）
-> 来源：https://github.com/Renhuai123/ziwei-doushu
-> 作者：王多鱼AI
-
-放在哪里都行：
-
-- **网页 / 产品**：About 页 / 关于我们 / 数据来源 / 页脚，写一行链接即可
-- **AI 模型**：模型卡（Model Card）或数据集卡（Dataset Card）的 "Training Data" 字段
-- **学术论文**：参考文献或致谢章节
-- **二次发布的数据集**：README 或 metadata 文件里注明上游来源
-
-仅此一条，其余都自由。希望这套数据能帮你做出好东西 —— 做出来记得来小红书 **@王多鱼AI** 打个招呼 👋
-
----
-
-## 开源内容
-
-### 排盘算法（`lib/ziwei/`）
-
-| 文件 | 说明 |
-|------|------|
-| `algorithm.ts` | 完整排盘流程：安命宫、定五行局、安十四主星、安辅星、排大限流年 |
-| `constants.ts` | 天干地支、十四主星、辅星常量 |
-| `sihua.ts` | 四化飞星系统（禄权科忌），含各天干四化对照表 |
-| `patterns.ts` | **1100+ 行格局知识库**：紫府同宫、日月并明、七杀朝斗等经典格局判定规则 |
-| `heming-knowledge.ts` | 合盘方法论：倪师体系下双盘比对逻辑 |
-| `types.ts` | TypeScript 类型定义 |
-| `cities.ts` | 中国城市经纬度，用于真太阳时校正 |
-| `famous.ts` | 历史名人命盘示例数据 |
-
-### 古籍原文（`lib/classics/`）
-
-- **骨髓赋**（`gusuifu.ts`）— 紫微斗数核心歌诀
-- **紫微斗数全集**（`quanji.ts`）— 清代古本
-- **紫微斗数全书**（`quanshu.ts`）— 陈希夷传本
-
-### 前端界面（`app/` + `components/`）
-
-完整的 Next.js 14 前端，包含：
-
-- 排盘工作台（命盘方格、宫位详情、星曜面板）
-- 合盘分析页
-- 古籍阅读器（全文搜索）
-- 命理百科（14 主星 + 12 宫位知识页）
-- 亮色/暗色主题切换
-- 移动端适配
-
-### SEO 知识图谱（`lib/seo/`）
-
-14 主星 × 12 宫位的结构化知识数据，可用于内容生成或知识库构建。
-
----
-
-## 未包含的部分
-
-以下属于平台运营层，不在开源范围内：
-
-- **AI 解读 prompt**：基于倪海夏体系调教的命盘解读提示词
-- **后端 API**：`/api/interpret`、`/api/heming`、`/api/generate` 等路由实现
-- **用户系统**：登录、短信验证、会员、支付
-- **服务端安全**：签名校验、防刷、水印
-- **部署配置**：Vercel/Nginx/Docker/数据库
-
-如果你需要 AI 解读能力，可以参考 `lib/ziwei/patterns.ts` 和 `heming-knowledge.ts` 中的知识库，结合任意 LLM 自行构建 prompt。
-
----
-
-## 快速开始
-
-```bash
-# 克隆
-git clone https://github.com/Renhuai123/ziwei-doushu.git
-cd ziwei-doushu
-
-# 安装依赖
-npm install
-
-# 配置环境变量
-cp .env.example .env.local
-# 编辑 .env.local，填入你的 AI API Key
-
-# 启动开发服务器
-npm run dev
-```
-
-> 注意：开源版不含后端 API 路由，AI 解读功能需要你自行实现 `/api/interpret` 等接口。排盘算法和前端界面可独立运行。
+> 重要提示：命理内容仅供文化娱乐、自我观察和个人参考，不构成医学、法律、投资、婚姻或其他重大决策建议。
 
 ---
 
 ## 技术栈
 
-- **框架**：Next.js 14（App Router）
-- **语言**：TypeScript
-- **样式**：Tailwind CSS + CSS Variables 设计系统
-- **排盘**：基于 [iztro](https://github.com/SylarLong/iztro) + lunar-javascript
-- **动画**：Framer Motion
+- Next.js App Router
+- TypeScript
+- React
+- Tailwind CSS / CSS Variables
+- `iztro` + `lunar-javascript` 排盘
+- DeepSeek OpenAI-compatible API（可配置）
+- MVP 本地 JSON 文件报告存储
 
 ---
 
-## 项目理念
+## 本地启动
 
-紫微斗数是中国传统命理学的瑰宝，倪海夏老师在《天纪》中系统梳理了正宗的紫微斗数体系。我们希望通过技术手段让更多人接触和学习这门学问。
+```bash
+# 安装依赖
+npm install
 
-开源排盘算法和知识库，是因为我们相信：**算法是公开的传统智慧，不应该被锁在围墙里**。真正的价值在于解读的深度、用户体验的打磨、以及持续运营的积累。
+# 准备环境变量
+cp .env.example .env.local
+# 编辑 .env.local，至少设置 ADMIN_TOKEN；如需真实 AI 生成，设置 DEEPSEEK_API_KEY
 
-想自己搭？代码都在这里，拿去用。嫌麻烦？来 [wdyziweidoushu666.com](https://wdyziweidoushu666.com) 直接用。
+# 启动开发服务器
+npm run dev
+```
+
+访问：
+
+- 首页：`http://localhost:3000/`
+- 输入页：`http://localhost:3000/chart/new`
+- 报告页：`http://localhost:3000/report/{reportId}`
+- Checkout 占位页：`http://localhost:3000/checkout/{reportId}`
+
+生产构建：
+
+```bash
+npm run build
+npm run start
+```
 
 ---
 
-## 协议
+## 环境变量说明
 
-本仓库分三部分授权，都是宽松协议，**商用没有任何限制**：
+`.env.example` 包含 MVP 所需变量：
 
-| 内容 | 协议 | 简单说 |
-|------|------|--------|
-| **代码**（`lib/`、`app/`、`components/`） | [MIT License](./LICENSE) | 拿去随便用，保留 LICENSE 文件即可 |
-| **数据**（Releases 中的 51.8 万样本数据集 v3.0） | 自由使用 · 要求 attribution | 商用也行，**注明数据来源即可**，详见上文 [数据许可与引用](#数据许可与引用) |
-| **古籍原文**（骨髓赋、紫微斗数全集 / 全书等） | Public Domain | 古书都是公有领域，不存在版权 |
-
-**一句话**：拿去用，商用也行，把数据来源链接带上就行。
+| 变量 | 必填 | 说明 |
+|---|---:|---|
+| `NEXT_PUBLIC_APP_NAME` | 否 | 前端展示产品名，默认可用 `AI 紫微命盘报告`。 |
+| `NEXT_PUBLIC_SITE_URL` | 否 | 站点 URL，本地默认为 `http://localhost:3000`。 |
+| `AI_PROVIDER` | 否 | 当前支持 `deepseek`，默认 `deepseek`。 |
+| `AI_MODEL` | 否 | 默认 `deepseek-chat`。 |
+| `DEEPSEEK_API_KEY` | 否 | DeepSeek API Key；未配置时使用 fallback 报告。 |
+| `OPENAI_API_KEY` | 否 | 预留变量，当前 MVP 尚未启用 OpenAI provider。 |
+| `ADMIN_TOKEN` | 是 | 管理员手动标记 paid 的接口 token。 |
+| `REPORT_PRICE` | 否 | Checkout 占位页展示价格。 |
+| `NEXT_PUBLIC_ATTRIBUTION_TEXT` | 否 | 前端/导出可复用 Attribution 文案。 |
+| `REPORT_STORE_DIR` | 否 | 本地 JSON 报告存储目录；仅建议本地开发使用。 |
 
 ---
 
-## 联系
+## Vercel 部署（优先推荐）
 
-- 线上平台：[wdyziweidoushu666.com](https://wdyziweidoushu666.com)
-- Issues：欢迎提 Bug 和建议
+Vercel 是当前 MVP 的首选 Serverless 部署方式。
+
+### 步骤
+
+1. 将代码推送到 GitHub 仓库。
+2. 登录 [Vercel](https://vercel.com/) 并选择 **Add New Project**。
+3. 连接 GitHub 仓库。
+4. Framework Preset 选择 **Next.js**。
+5. 设置环境变量：
+   - `NEXT_PUBLIC_APP_NAME`
+   - `NEXT_PUBLIC_SITE_URL`
+   - `AI_PROVIDER`
+   - `AI_MODEL`
+   - `DEEPSEEK_API_KEY`
+   - `OPENAI_API_KEY`
+   - `ADMIN_TOKEN`
+   - `REPORT_PRICE`
+   - `NEXT_PUBLIC_ATTRIBUTION_TEXT`
+6. Build Command 使用：
+
+```bash
+npm run build
+```
+
+7. Output 使用 Vercel 对 Next.js 的默认设置，不需要手动填写 output directory。
+8. 部署完成后测试：
+   - 首页 `/`
+   - 输入页 `/chart/new`
+   - 创建报告 `POST /api/reports`
+   - 报告页 `/report/{id}`
+   - Checkout 页 `/checkout/{id}`
+   - 管理员接口 `POST /api/admin/reports/{id}/mark-paid`
+   - paid 报告 Markdown 导出 `/api/reports/{id}/export`
+
+### Vercel 生产存储注意
+
+当前 MVP 的本地 JSON 文件存储只适合本地开发。Vercel Serverless/Edge 环境不能依赖项目目录文件作为持久化数据库；即使写入成功，也可能在冷启动、实例切换或重新部署后丢失。
+
+生产部署建议尽快替换为：
+
+- Supabase Postgres
+- Neon Postgres
+- Upstash Redis
+- Cloudflare D1
+
+---
+
+## Cloudflare Pages 部署（备选）
+
+Cloudflare Pages 可作为备选部署目标，但需要特别注意 Next.js App Router 与 API Routes 的适配。
+
+### 注意事项
+
+- 本项目使用 Next.js App Router，并包含多个 Route Handlers/API Routes：
+  - `POST /api/reports`
+  - `POST /api/admin/reports/[id]/mark-paid`
+  - `GET /api/reports/[id]/export`
+- Cloudflare Pages 对 Next.js 的支持取决于当前 adapter/runtime 能力。
+- 如果直接部署失败，需要使用 Cloudflare 官方 Next.js 适配方案或 `@cloudflare/next-on-pages`。
+- 如果 API Routes、Node.js runtime、文件系统写入或依赖包不兼容，建议优先使用 Vercel。
+
+### 参考命令
+
+仓库中保留了 Cloudflare 相关脚本：
+
+```bash
+npm run build:cf
+npm run preview:cf
+```
+
+部署前请确认：
+
+1. API Routes 能在 Cloudflare runtime 中正常工作。
+2. 不依赖本地 JSON 文件持久化。
+3. 已把报告存储迁移到 Cloudflare D1、Supabase、Neon 或 Upstash 等外部服务。
+
+---
+
+## Serverless 存储限制
+
+当前报告存储位于 `lib/report/store.ts`，默认写入本地 JSON 文件：
+
+```txt
+data/reports/{reportId}.json
+```
+
+这只适合：
+
+- 本地开发
+- 功能验证
+- 临时 demo
+
+不适合：
+
+- Vercel 生产环境
+- Cloudflare Pages 生产环境
+- 多实例部署
+- 需要长期保存用户报告的商业环境
+
+生产环境请替换为外部持久化存储：
+
+- **Supabase Postgres**：推荐，适合报告、订单、用户数据。
+- **Neon Postgres**：适合 Serverless PostgreSQL。
+- **Upstash Redis**：适合轻量 KV、短期缓存、状态标记。
+- **Cloudflare D1**：适合 Cloudflare 生态内的 SQLite-like 持久化。
+
+建议保留 `ReportStore` 接口，新增数据库实现替换当前 `JsonFileReportStore`。
+
+---
+
+## 手动支付占位流程
+
+当前 MVP 不接真实支付。流程为：
+
+1. 用户创建免费报告。
+2. 用户点击“解锁完整报告”进入 `/checkout/{reportId}`。
+3. Checkout 页展示价格、收款说明、微信收款码占位。
+4. 管理员确认收款后调用：
+
+```bash
+curl -X POST https://your-domain.com/api/admin/reports/{reportId}/mark-paid \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+```
+
+5. 报告状态变为 `paid`，`/report/{reportId}` 立即展示完整报告章节。
+6. paid 报告可访问 `/api/reports/{reportId}/export` 下载 Markdown。
+
+---
+
+## 已知问题
+
+- 当前支付为手动占位，不包含真实支付网关、订单系统或自动回调。
+- 当前报告存储为本地 JSON 文件，不适合生产环境或 Serverless 持久化。
+- 当前 AI 输出 Prompt 和内容质量仍需继续调优，尤其是章节深度、术语解释和安全边界。
+- `OPENAI_API_KEY` 为预留变量，当前代码默认仅支持 `AI_PROVIDER=deepseek`。
+- Markdown 导出仅对 `paid` 报告开放，`free` / `failed` 报告会返回 403。
+- Cloudflare Pages 可能需要额外 Next.js 适配；若 API Routes 或 Node.js runtime 不兼容，建议优先 Vercel。
+- 当前没有复杂用户系统、报告历史、自动支付、后台 CMS、RAG 知识库和 PDF 导出。
+
+---
+
+## Attribution
+
+本产品排盘算法与部分数据基于 `Renhuai123/ziwei-doushu` 开源项目，遵循 MIT License。
+
+- 上游仓库：https://github.com/Renhuai123/ziwei-doushu
+- 原作者/数据来源标注请在产品页面、导出报告或 About 页面保留。
+
+报告导出中的 Attribution 文案：
+
+> 本产品排盘算法与部分数据基于 Renhuai123/ziwei-doushu 开源项目，遵循 MIT License。来源：https://github.com/Renhuai123/ziwei-doushu
+
+---
+
+## License
+
+本仓库保留上游项目的 MIT License。请勿删除 `LICENSE` 文件。
+
+代码与衍生项目使用时，请保留版权声明、MIT License 以及上游 Attribution。
+
+---
+
+## P1 / P2 建议
+
+P1：
+
+- 将报告存储替换为 Supabase/Neon/Upstash/D1。
+- 将 `POST /api/reports` 接入真实 AI 生成结果，而不是只保存初始摘要。
+- 增加管理员后台或受保护工具页，替代手写 curl 标记 paid。
+- 补充基础自动化测试：报告创建、mark-paid、Markdown export。
+
+P2：
+
+- 接入 Stripe、微信支付或其他真实支付网关。
+- 增加用户系统与报告历史。
+- 增加 PDF 导出。
+- 增加 RAG 知识库与 Prompt 版本管理。
+- 增加报告再生成与对比能力。

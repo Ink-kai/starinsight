@@ -214,6 +214,10 @@ export default function HomePage() {
 
       <footer className="relative z-10 border-t border-white/10 px-5 py-8 text-center text-xs leading-6 text-slate-500 sm:px-8">
         <p>{ATTRIBUTION}</p>
+        <nav className="mt-3 flex items-center justify-center gap-4 text-slate-400" aria-label="法律与合规链接">
+          <a href="/privacy" className="underline-offset-4 hover:text-amber-200 hover:underline">隐私政策</a>
+          <a href="/terms" className="underline-offset-4 hover:text-amber-200 hover:underline">服务条款</a>
+        </nav>
         <p className="mt-2">© {new Date().getFullYear()} AI 紫微命盘报告</p>
       </footer>
     </main>

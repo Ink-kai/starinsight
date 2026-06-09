@@ -1,7 +1,8 @@
-import { randomUUID } from 'crypto';
+import { randomUUID, randomBytes } from 'crypto';
 import { mkdir, readFile, rename, writeFile } from 'fs/promises';
 import path from 'path';
 import type { CreateReportInput, ReportStatus, ZiweiReport } from './types';
+import { generateReportAccessToken } from './access';
 
 const REPORTS_DIR = process.env.REPORT_STORE_DIR || path.join(process.cwd(), 'data', 'reports');
 const REPORT_FILE_EXTENSION = '.json';
@@ -42,6 +43,7 @@ export class JsonFileReportStore implements ReportStore {
     const now = new Date().toISOString();
     const report: ZiweiReport<TChartData> = {
       id: randomUUID(),
+      accessToken: input.accessToken ?? generateReportAccessToken(),
       birthInfo: input.birthInfo,
       chartData: input.chartData,
       aiSummary: input.aiSummary ?? '',

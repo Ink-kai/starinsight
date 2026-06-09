@@ -25,6 +25,8 @@ export interface ReportInput {
 }
 
 export interface AIReportProvider {
+  /** 最近一次生成过程进入 fallback 的原因；成功生成时应清空。 */
+  readonly lastFailureReason?: string;
   generateReport(input: ReportInput): Promise<ReportOutput>;
 }
 

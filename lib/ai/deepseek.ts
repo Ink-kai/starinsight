@@ -77,6 +77,11 @@ export class DeepSeekReportProvider implements AIReportProvider {
   private readonly apiKey?: string;
   private readonly model: string;
   private readonly baseUrl: string;
+  private _lastFailureReason?: string;
+
+  get lastFailureReason(): string | undefined {
+    return this._lastFailureReason;
+  }
 
   constructor(options: DeepSeekProviderOptions = {}) {
     this.apiKey = options.apiKey ?? process.env.DEEPSEEK_API_KEY;
@@ -85,7 +90,10 @@ export class DeepSeekReportProvider implements AIReportProvider {
   }
 
   async generateReport(input: ReportInput): Promise<ReportOutput> {
+    this._lastFailureReason = undefined;
+
     if (!this.apiKey) {
+      this._lastFailureReason = 'Missing DEEPSEEK_API_KEY';
       return buildFallbackReport(input);
     }
 
@@ -122,7 +130,9 @@ export class DeepSeekReportProvider implements AIReportProvider {
 
       return parseReportOutput(content);
     } catch (error) {
+      const reason = error instanceof Error ? error.message : 'Unknown error';
       console.error('[ai-report] DeepSeek generation failed, using fallback report.', error);
+      this._lastFailureReason = reason;
       return buildFallbackReport(input);
     }
   }

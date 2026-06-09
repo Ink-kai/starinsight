@@ -3,11 +3,45 @@ import { notFound } from 'next/navigation';
 import { getReport } from '@/lib/report/store';
 import type { ZiweiChart } from '@/lib/ziwei/types';
 import { BRANCHES } from '@/lib/ziwei/constants';
+import { verifyReportAccess } from '@/lib/report/access';
 
-export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ReportPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ token?: string }>;
+}) {
   const { id } = await params;
+  const { token } = await searchParams;
+
+  // 服务端鉴权：先查询报告，再校验 token
   const report = await getReport(id);
   if (!report) notFound();
+
+  // 服务端验证 token：缺失/错误/无效一律拒绝
+  const access = verifyReportAccess(report, token);
+  if (!access.ok) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#050712] px-5 py-10 text-slate-100 sm:px-8">
+        <section className="w-full max-w-md rounded-[2rem] border border-rose-400/20 bg-rose-500/[0.06] p-8 text-center">
+          <p className="text-xs uppercase tracking-[0.35em] text-rose-300/80">无法访问</p>
+          <h1 className="mt-4 text-2xl font-semibold text-white">无法访问这份报告</h1>
+          <p className="mt-3 text-sm leading-7 text-slate-300">
+            {access.status === 401
+              ? '缺少报告访问 token。请使用完整链接打开报告。'
+              : '报告访问 token 无效或已过期。'}
+          </p>
+          <Link
+            href="/chart/new"
+            className="mt-6 inline-block text-sm text-amber-200 underline-offset-4 hover:underline"
+          >
+            ← 重新生成报告
+          </Link>
+        </section>
+      </main>
+    );
+  }
 
   const chart = report.chartData as ZiweiChart;
 

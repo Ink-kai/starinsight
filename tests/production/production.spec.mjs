@@ -67,17 +67,29 @@ test.describe('production alpha report flow', () => {
     expect(reportId, 'reportId from create report').toBeTruthy();
     expect(accessToken, 'accessToken from create report').toBeTruthy();
 
+    // 情况A: 正确 token -> 显示报告
     const correct = await request.get(reportUrl);
     expect(correct.status(), await correct.text()).toBe(200);
     await expect(correct).toContainText('AI 紫微命盘报告');
+    await expect(correct).toContainText('命盘报告已创建');
+    // 正确 token 不应显示拒绝提示
+    await expect(correct).not.toContainText('无法访问这份报告');
 
+    // 情况B: 无 token -> 拒绝
     const missing = await request.get(`/report/${reportId}`);
     expect(missing.status(), await missing.text()).toBe(200);
     await expect(missing).toContainText('无法访问这份报告');
+    await expect(missing).toContainText('缺少报告访问 token');
 
+    // 情况C: 错误 token -> 拒绝
     const wrong = await request.get(`/report/${reportId}?token=wrong-token`);
     expect(wrong.status(), await wrong.text()).toBe(200);
     await expect(wrong).toContainText('无法访问这份报告');
+    await expect(wrong).toContainText('报告访问 token 无效');
+
+    // 情况D: 报告不存在 -> 404
+    const notFound = await request.get('/report/00000000-0000-0000-0000-000000000000?token=any-token');
+    expect(notFound.status(), await notFound.text()).toBe(404);
   });
 
   test('free report cannot be exported and wrong export token is rejected', async ({ request }) => {

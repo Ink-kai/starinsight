@@ -1,4 +1,4 @@
-import { randomUUID, randomBytes } from 'crypto';
+import { randomUUID } from 'crypto';
 import { mkdir, readFile, rename, writeFile } from 'fs/promises';
 import path from 'path';
 import type { CreateReportInput, ReportStatus, ZiweiReport } from './types';
@@ -94,24 +94,45 @@ export class JsonFileReportStore implements ReportStore {
   }
 }
 
-const defaultReportStore: ReportStore = new JsonFileReportStore();
+// Singleton instance cache for cold start optimization
+let cachedStore: ReportStore | undefined;
 
+export function getReportStore(): ReportStore {
+  if (cachedStore !== undefined) {
+    return cachedStore;
+  }
+
+  const storeType = process.env.REPORT_STORE || 'json';
+
+  if (storeType === 'supabase') {
+    // Lazy import to avoid circular dependency issues
+    const { SupabaseReportStore } = require('./supabase-store');
+    const instance = new SupabaseReportStore();
+    cachedStore = instance;
+    return instance;
+  } else {
+    const instance = new JsonFileReportStore();
+    cachedStore = instance;
+    return instance;
+  }
+}
+
+// Export convenience functions that delegate to the configured store
 export function createReport<TChartData>(input: CreateReportInput<TChartData>): Promise<ZiweiReport<TChartData>> {
-  return defaultReportStore.create(input);
+  return getReportStore().create(input);
 }
 
 export function getReport(id: string): Promise<ZiweiReport | null> {
-  return defaultReportStore.get(id);
+  return getReportStore().get(id);
 }
 
 export function updateReportStatus(id: string, status: ReportStatus): Promise<ZiweiReport> {
-  return defaultReportStore.updateStatus(id, status);
+  return getReportStore().updateStatus(id, status);
 }
 
 export function updateReport(id: string, patch: Partial<Omit<ZiweiReport, 'id' | 'createdAt'>>): Promise<ZiweiReport> {
-  return defaultReportStore.update(id, patch);
+  return getReportStore().update(id, patch);
 }
 
-export function getReportStore(): ReportStore {
-  return defaultReportStore;
-}
+// Export SupabaseReportStore for direct use in admin operations
+export { SupabaseReportStore } from './supabase-store';

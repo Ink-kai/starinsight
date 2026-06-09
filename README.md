@@ -199,3 +199,79 @@ npm run dev
 
 - 线上平台：[wdyziweidoushu666.com](https://wdyziweidoushu666.com)
 - Issues：欢迎提 Bug 和建议
+
+---
+
+## Production Alpha 使用说明
+
+本项目已部署到 Vercel Production 环境。
+
+### 生产环境信息
+
+| 项目 | 值 |
+|------|-----|
+| 生产地址 | https://starinsight.vercel.app |
+| AI Provider | DeepSeek |
+| 报告存储 | Supabase Postgres |
+| RLS | 已启用 |
+
+### API 端点
+
+| 端点 | 方法 | 说明 | 状态 |
+|------|------|------|------|
+| `/api/reports` | POST | 创建报告 | ✅ |
+| `/api/reports/[id]/export` | GET | 导出 Markdown（需 token） | ✅ |
+| `/api/admin/reports/[id]/mark-paid` | POST | Admin 标记付费 | ✅ |
+
+### 环境变量配置
+
+```bash
+# 生产环境 (.env.local)
+REPORT_STORE=supabase
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# 本地开发
+REPORT_STORE=json
+```
+
+### 本地验证命令
+
+```bash
+# 1. 环境检查
+npm run check:env
+
+# 2. 构建
+npm run build
+
+# 3. 烟雾测试
+npm run test:smoke
+
+# 4. 测试报告创建 (本地)
+curl -X POST http://localhost:3000/api/reports \
+  -H "Content-Type: application/json" \
+  -d '{"gender":"male","birthDate":"1990-01-01","birthTime":"08:30"}'
+
+# 5. 测试报告创建 (生产)
+curl -X POST https://starinsight.vercel.app/api/reports \
+  -H "Content-Type: application/json" \
+  -d '{"gender":"male","birthDate":"1990-01-01","birthTime":"08:30"}'
+```
+
+### Supabase Migration
+
+生产部署前需执行以下 Migration：
+
+```bash
+# 1. 创建 reports 表
+# supabase/migrations/001_create_reports.sql
+
+# 2. 启用 RLS
+# supabase/migrations/002_enable_reports_rls.sql
+```
+
+### 了解更多
+
+- [Vercel 部署指南](./docs/architecture/vercel-production.md)
+- [Supabase 架构](./docs/architecture/supabase-production.md)
+- [生产审计报告](./docs/architecture/starinsight-production-audit.md)

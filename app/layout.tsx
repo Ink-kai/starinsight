@@ -5,31 +5,26 @@ import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
-  title: '紫微命盘 · 倪海夏正宗紫微斗数',
-  description: '基于倪海夏正宗紫微斗数体系，AI深度解读您的命盘格局、大限流年、感情事业财富健康全方位解析',
-  keywords: '紫微斗数, 倪海夏, 倪海厦, 紫微斗数全集, 紫微斗数全书, 骨髓赋, 命盘, 命理, 14主星, 12宫位',
-  metadataBase: new URL('https://wdyziweidoushu666.com'),
+  title: 'StarInsight｜个人命盘档案与决策追踪系统',
+  description: 'StarInsight 帮助你建立个人命盘档案，记录关键决定，追踪行动结果，形成长期可复盘的人生档案。',
+  keywords: 'StarInsight, 个人命盘档案, 决策追踪, 行动复盘, 紫微斗数, 自我观察',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: '紫微命盘 · 倪海夏正宗紫微斗数',
-    description: '基于倪海夏正宗紫微斗数体系，AI深度解读您的命盘格局、大限流年、感情事业财富健康全方位解析',
-    url: 'https://wdyziweidoushu666.com',
-    siteName: '紫微研究',
+    title: 'StarInsight｜个人命盘档案与决策追踪系统',
+    description: '记录关键决定，追踪行动结果，让每一次迷茫都留下可复盘的线索。',
+    url: '/',
+    siteName: 'StarInsight',
     locale: 'zh_CN',
     type: 'website',
   },
-  // 站长平台验证（拿到 verification code 后填入对应字段，重新部署即可）
   verification: {
-    // Google Search Console: 在 https://search.google.com/search-console 添加站点后获取
     google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || undefined,
-    // Bing Webmaster Tools: 在 https://www.bing.com/webmasters 添加站点后获取
     other: {
       'msvalidate.01': process.env.NEXT_PUBLIC_BING_VERIFICATION || '808FFC6023A2C359B375DD860FEDA856',
-      // 百度站长（等执照下来后）
       'baidu-site-verification': process.env.NEXT_PUBLIC_BAIDU_VERIFICATION || '',
-      // 360 站长（等执照下来后）
       '360-site-verification': process.env.NEXT_PUBLIC_360_VERIFICATION || '',
     },
   },
